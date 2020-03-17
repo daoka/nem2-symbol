@@ -16,7 +16,6 @@ export class Tab1Page {
     const wallet = SimpleWallet.create('wallet-name', password, NetworkType.TEST_NET);
     const account = wallet.open(password);
     console.log('Your new account address is:', account.address.pretty(), 'and its private key', account.privateKey);
-    /* end block 01 */
   }
 
 }
