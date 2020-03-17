@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import {NetworkType, Password, SimpleWallet} from 'nem2-sdk';
+import {Account, NetworkType} from 'symbol-sdk';
 
 @Component({
   selector: 'app-tab1',
@@ -11,10 +11,7 @@ export class Tab1Page {
   constructor() {}
 
   createWallet() {
-    const password = new Password('password');
-
-    const wallet = SimpleWallet.create('wallet-name', password, NetworkType.TEST_NET);
-    const account = wallet.open(password);
+    const account = Account.generateNewAccount(NetworkType.TEST_NET);
     console.log('Your new account address is:', account.address.pretty(), 'and its private key', account.privateKey);
   }
 
