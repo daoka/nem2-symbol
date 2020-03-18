@@ -10,6 +10,9 @@ import {
   RepositoryFactoryHttp,
   TransferTransaction,
   UInt64,
+  NetworkCurrencyPublic,
+  TransactionService,
+  Listener,
 } from 'symbol-sdk';
 
 @Component({
@@ -24,7 +27,7 @@ export class Tab2Page {
   sendSymbol() {
     /* start block 01 */
     // 受け取りアドレス
-    const rawAddress = 'TBONKW-COWBZY-ZB2I5J-D3LSDB-QVBYHB-757VN3-SKPP';
+    const rawAddress = 'TBFOFT-ZIFH3G-GXFBYO-WXMN6M-YM2LBU-43PMHH-6EBS';
     // アドレスの文字列から受信するアドレスを復元する
     const recipientAddress = Address.createFromRawAddress(rawAddress);
     // ネットワークタイプの選択
@@ -34,6 +37,7 @@ export class Tab2Page {
     // ６乗
     const networkCurrencyDivisibility = 6;
     // トランザクションの作成
+    /*
     const transferTransaction = TransferTransaction.create(
         Deadline.create(),
         recipientAddress,
@@ -42,11 +46,23 @@ export class Tab2Page {
         PlainMessage.create('This is a test message'),
         networkType,
         UInt64.fromUint(2000000));
+        */
+
+    const transferTransaction = TransferTransaction.create(
+      Deadline.create(),
+      recipientAddress,
+      // NetworkCurrencyPublicでsymbol.xymを指定することができます
+      [NetworkCurrencyPublic.createAbsolute(10)],
+      PlainMessage.create('This is a test message'),
+      networkType,
+      UInt64.fromUint(20000)
+    );
     /* end block 01 */
+
 
     /* start block 02 */
     // 送信者のプライベートキー
-    const privateKey = '1111111111111111111111111111111111111111111111111111111111111111';
+    const privateKey = '6DC6BA3220098E81297220ED760A482C2DEFF456B318F2BBAE48385C81340180';
     // プライベートキーからアカウントを復元
     const account = Account.createFromPrivateKey(privateKey, networkType);
     // ジェネレーションハッシュはノードに必ず一つあります
@@ -60,13 +76,39 @@ export class Tab2Page {
     const nodeUrl = 'http://api-01.us-west-1.symboldev.network:3000';
     // アドレスからどのノードなのかを指定
     const repositoryFactory = new RepositoryFactoryHttp(nodeUrl);
+
     // ブロックにトランザクションを書き込む
+    /*
     const transactionHttp = repositoryFactory.createTransactionRepository();
 
     transactionHttp
         .announce(signedTransaction)
         .subscribe((x) => console.log(x), (err) => console.error(err));
+        */
     /* end block 03 */
+
+    const transactionRepository = repositoryFactory.createTransactionRepository();
+    const receiptRepository = repositoryFactory.createReceiptRepository();
+    const wsEndpoint = nodeUrl.replace('http', 'ws');
+    const listener = new Listener(wsEndpoint, WebSocket);
+    const transactionService = new TransactionService(transactionRepository, receiptRepository);
+
+    console.log(signedTransaction.hash);
+
+    // これを使うと, トランザクションのアナウンスが成功したか、どんなエラーが返ってきたか確認することができます
+    listener.open().then(() => {
+      transactionService.announce(signedTransaction, listener).subscribe(
+        (x) => {
+          console.log(x);
+          listener.close();
+        }, (err) => {
+          console.error(err);
+          listener.close();
+        }
+      );
+    }).catch((err) => {
+      console.error(err);
+    });
   }
 
 }
